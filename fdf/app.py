@@ -33,6 +33,7 @@ class App:
             self.root, text="Колесо: масштаб   Стрелки: сдвиг   +/-: высота   "
             "T: вид сверху   [ ]: угол   R: сброс   Esc: выход",
             bg="#1E293B", fg="#E2E8F0", pady=10, wraplength=950,
+            font=("DejaVu Sans", 10),
         )
         self.status.pack(fill=tk.X)
         self.root.bind("<Escape>", lambda event: self.root.destroy())
@@ -67,15 +68,15 @@ class App:
             dx, dy = shifts[key]
             self.camera.offset_x += dx
             self.camera.offset_y += dy
-        elif key in ("plus", "equal", "KP_Add", "minus", "KP_Subtract"):
-            step = -0.2 if key in ("minus", "KP_Subtract") else 0.2
+        elif key in ("plus", "equal", "KP_Add", "+", "=", "minus", "KP_Subtract", "-"):
+            step = -0.2 if key in ("minus", "KP_Subtract", "-") else 0.2
             self.camera.z_scale = max(0.0, min(100.0, self.camera.z_scale + step))
             self._fit()
         elif key.lower() == "t":
             self.camera.top_view = not self.camera.top_view
             self._fit()
-        elif key in ("bracketleft", "bracketright"):
-            step = -pi / 36 if key == "bracketleft" else pi / 36
+        elif key in ("bracketleft", "bracketright", "[", "]"):
+            step = -pi / 36 if key in ("bracketleft", "[") else pi / 36
             self.camera.angle = max(0.0, min(pi * 4 / 9, self.camera.angle + step))
             self._fit()
         elif key.lower() == "r":

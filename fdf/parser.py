@@ -32,9 +32,9 @@ def parse_map(path: str | Path) -> Map:
     try:
         lines = Path(path).read_text(encoding="utf-8-sig").splitlines()
     except UnicodeDecodeError as error:
-        line = error.object[:error.start].count(b"\n") + 1
+        error_line = error.object[:error.start].count(b"\n") + 1
         raise MapFormatError(
-            f"строка {line}, колонка 1: файл должен быть текстом UTF-8"
+            f"строка {error_line}, колонка 1: файл должен быть текстом UTF-8"
         ) from error
     while lines and not lines[-1].strip():
         lines.pop()

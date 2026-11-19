@@ -33,6 +33,10 @@ def test_one_point() -> None:
     camera = Camera()
     camera.fit(Map([[Point(0, 0, 100)]]), 800, 600)
     assert camera.project(Point(0, 0, 100)) == (400, 300)
+    with pytest.raises(OverflowError):
+        camera.fit(Map([[Point(0, 0, 10**400)]]), 800, 600)
+    with pytest.raises(OverflowError):
+        camera.fit(Map([[Point(0, 0, 10**308), Point(1, 0, -(10**308))]]), 800, 600)
 
 
 def test_flat_is_symmetric() -> None:

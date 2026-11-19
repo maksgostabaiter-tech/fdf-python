@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from math import pi
+from types import TracebackType
 
 from fdf.errors import FdfError
 from fdf.model import Map
@@ -27,6 +28,8 @@ class App:
         self.root.title("FdF — карта высот")
         self.root.geometry("1000x750")
         self.root.minsize(400, 300)
+        self.callback_error: FdfError | None = None
+        self.root.report_callback_exception = self._on_callback_error
         self.canvas = tk.Canvas(self.root, bg="#101827", highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.status = tk.Label(
@@ -44,6 +47,14 @@ class App:
         self.root.protocol("WM_DELETE_WINDOW", self.root.destroy)
         self.canvas.bind("<Configure>", self._on_resize)
         self.pending_redraw: str | None = None
+
+    def _on_callback_error(
+        self, error_type: type[BaseException], error: BaseException,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Передать ошибку события в main через run, без стандартного traceback Tk."""
+        self.callback_error = FdfError(f"Ошибка обработки события окна: {error}")
+        self.root.destroy()
 
     def _fit(self) -> None:
         self.camera.fit(
@@ -130,3 +141,5 @@ class App:
             self.root.mainloop()
         except tk.TclError as error:
             raise FdfError(f"Ошибка графического интерфейса: {error}") from error
+        if self.callback_error is not None:
+            raise self.callback_error

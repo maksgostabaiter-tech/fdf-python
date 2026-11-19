@@ -1,7 +1,7 @@
 """Преобразование координат карты в координаты окна."""
 
 from dataclasses import dataclass
-from math import cos, pi, sin
+from math import cos, isfinite, pi, sin
 
 from fdf.model import Map, Point
 
@@ -38,6 +38,8 @@ class Camera:
         min_y = min(y for _, y in coordinates)
         max_y = max(y for _, y in coordinates)
         span_x, span_y = max_x - min_x, max_y - min_y
+        if not all(isfinite(value) for value in (min_x, max_x, min_y, max_y, span_x, span_y)):
+            raise OverflowError("Координаты выходят за диапазон экранных вычислений")
         limits: list[float] = []
         if span_x > 0:
             limits.append(width / span_x)

@@ -13,9 +13,12 @@ class Camera:
     offset_y: float = 0.0
     z_scale: float = 1.0
     angle: float = pi / 6  # Радианы; pi / 6 соответствует 30 градусам.
+    top_view: bool = False
 
     def raw_project(self, point: Point) -> tuple[float, float]:
         """Координаты до масштабирования и сдвига."""
+        if self.top_view:
+            return float(point.x), float(point.y)
         return (
             (point.x - point.y) * cos(self.angle),
             (point.x + point.y) * sin(self.angle) - point.z * self.z_scale,
@@ -44,3 +47,35 @@ class Camera:
         self.scale = min(limits) * 0.9 if limits else 1.0
         self.offset_x = width / 2 - (min_x + max_x) / 2 * self.scale
         self.offset_y = height / 2 - (min_y + max_y) / 2 * self.scale
+
+    def zoom(self, factor: float, anchor_x: float, anchor_y: float) -> None:
+        """Изменить масштаб, оставив экранную опорную точку неподвижной."""
+        if factor <= 0:
+            raise ValueError("Коэффициент масштаба должен быть положительным")
+        new_scale = max(1e-9, min(1e9, self.scale * factor))
+        actual_factor = new_scale / self.scale
+        self.offset_x = anchor_x + (self.offset_x - anchor_x) * actual_factor
+        self.offset_y = anchor_y + (self.offset_y - anchor_y) * actual_factor
+        self.scale = new_scale
+
+
+def lerp_color(start: str, end: str, t: float) -> str:
+    """Линейная интерполяция каждого канала RGB, t ограничивается [0, 1]."""
+    t = max(0.0, min(1.0, t))
+    channels = []
+    for offset in (1, 3, 5):
+        a = int(start[offset:offset + 2], 16)
+        b = int(end[offset:offset + 2], 16)
+        channels.append(round(a + (b - a) * t))
+    return "#" + "".join(f"{channel:02X}" for channel in channels)
+
+
+def height_color(z: int, z_min: int, z_max: int) -> str:
+    """Палитра: синий, зелёный, жёлтый, красный."""
+    palette = ("#3B82F6", "#22C55E", "#FACC15", "#EF4444")
+    if z_max == z_min:
+        return palette[0]
+    t = max(0.0, min(1.0, (z - z_min) / (z_max - z_min)))
+    position = t * (len(palette) - 1)
+    index = min(int(position), len(palette) - 2)
+    return lerp_color(palette[index], palette[index + 1], position - index)
